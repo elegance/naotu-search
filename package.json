@@ -1,0 +1,22 @@
+{
+  "name": "pandata",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/main.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "qs": "^6.5.1",
+    "request": "^2.85.0"
+  },
+  "devDependencies": {
+    "@types/node": "^9.6.6",
+    "@types/qs": "^6.5.1",
+    "ts-node": "^6.0.0",
+    "typescript": "^2.8.3"
+  }
+}
