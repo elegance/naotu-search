@@ -7,6 +7,7 @@ export interface FileNode {
     create_time: string;
     last_modified_time: string;
     size: number;
+    content?: string;
 }
 
 export enum FileType {

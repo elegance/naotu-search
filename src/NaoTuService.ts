@@ -27,7 +27,7 @@ export default class NaoTuService {
     constructor(cookie: string) {
         this.axiosInstance = axios.create({
             baseURL: 'http://naotu.baidu.com/',
-            timeout: 1000,
+            timeout: 5000,
             headers: {
                 'Origin': 'http://naotu.baidu.com',
                 'Accept-Encoding': 'gzip, deflate',
@@ -91,9 +91,8 @@ export default class NaoTuService {
         return new Promise<KmFile>((resolve, reject) => {
             this.axiosInstance.post('/bos/open', qs.stringify(Object.assign({ fileGuid }, this.defaultData))).then(resp => {
                 // 从结果取得 data.content 字符串
-                let { content } = resp.data;
+                let { content } = resp.data.data;
                 let root = JSON.parse(content);
-
                 resolve((root as KmFile));
             }).catch(reject);
         });
