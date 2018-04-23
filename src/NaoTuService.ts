@@ -38,7 +38,6 @@ export default class NaoTuService {
                 'Referer': 'http://naotu.baidu.com/home',
                 'Connection': 'keep-alive',
                 'Cookie': cookie
-                // 'Cookie': `bds_wiE55BGOG8BkGnpPs6UNtPbb_session=expires_in%3D2592000%26refresh_token%3D22.44ed8f7fe11a3376ae704666b713f042.315360000.1839546274.2600644597-2246711%26access_token%3D21.b5c6712ecb469eca42d1c9683e8c8f7a.2592000.1526778274.2600644597-2246711%26session_secret%3Dcde2adaededcbf121d8a78dfcd7669d3%26session_key%3D9mnRJqRbS65DGbsjX%252BpB%252Fl2r8CbzKXC%252B1H%252FAKAvr%252FA5bcMmF7LevlUq3Oeq3LcSZCKPGPHGHJ5uiuK0VaJkKYP40UcyKwS352Q%253D%253D%26scope%3Dbasic%26expires_at%3D1526778274%26uid%3D2600644597%26uname%3Da494910091%26portrait%3De19b613439343931303039312a06; csrf_cookie=${NaoTuService.csrfToken}`
             }
         });
         this.csrfToken = NaoTuService.getCstfTokenByCookie(cookie);
