@@ -15,13 +15,17 @@ export enum FileType {
     FILE = "file"
 }
 
-export interface KmFile {
-    data: KmFileNode;
-    children?: Array<KmFileNode>;
-}
+// export interface KmFile {
+//     data: KmFileNode;
+//     children?: Array<KmFileNode>;
+// }
 
-export interface KmFileNode {
-    id: string;
-    created: number;
-    text: string;
-}
+// export interface KmFileNode {
+//     id: string;
+//     created: number;
+//     text: string;
+//     hyperlink?: string;
+//     hyperlinkTitle?: string;
+//     expandState?: string;
+//     'font-weight'?: string;
+// }

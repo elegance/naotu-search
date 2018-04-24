@@ -1,7 +1,7 @@
 import { default as axios, AxiosInstance } from 'axios';
 import qs from 'qs';
 
-import { FileNode, KmFile } from './Model';
+import { FileNode } from './Model';
 
 export default class NaoTuService {
 
@@ -27,7 +27,7 @@ export default class NaoTuService {
     constructor(cookie: string) {
         this.axiosInstance = axios.create({
             baseURL: 'http://naotu.baidu.com/',
-            timeout: 5000,
+            timeout: 3000,
             headers: {
                 'Origin': 'http://naotu.baidu.com',
                 'Accept-Encoding': 'gzip, deflate',
@@ -87,13 +87,13 @@ export default class NaoTuService {
      * 获取文件详情
      * @param fileGuid 文件guid
      */
-    open(fileGuid: string): Promise<KmFile> {
-        return new Promise<KmFile>((resolve, reject) => {
+    open(fileGuid: string): Promise<string> {
+        console.log(`访问网络，获取文件详情`)
+        return new Promise<string>((resolve, reject) => {
             this.axiosInstance.post('/bos/open', qs.stringify(Object.assign({ fileGuid }, this.defaultData))).then(resp => {
                 // 从结果取得 data.content 字符串
                 let { content } = resp.data.data;
-                let root = JSON.parse(content);
-                resolve((root as KmFile));
+                resolve(content);
             }).catch(reject);
         });
     }

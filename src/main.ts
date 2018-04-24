@@ -3,45 +3,78 @@ import * as path from 'path';
 
 import NaoTuService from './NaoTuService';
 import StoreService from './StoreService';
-import { FileNode, KmFile, FileType } from './Model';
+import { FileNode, FileType } from './Model';
 
 let cookie = readCookie();
 let naotuService = new NaoTuService(cookie);
 let storeService = new StoreService('D:/naotu.db');
 
+// 数据存储的 文件信息，key为fileGuid
+let dbDataMap = new Map<string, FileNode>();
+
+// 远端获取的文件信息，key为fileGuid
+let remoteDataMap = new Map<string, FileNode>();
+
 
 
 async function main() {
-   
     try {
-
-
         let dbDatas = await storeService.loadData();
 
-        // 数据库有数据，做同步
-        // 同步包括：
-        // 增加：db 不存在，http接口存在者，插入
-        // 删除：db 存在，http接口不存在者，做 删除标志
-        // 修改: 根据唯一id，更新修改名称、内容、大小 等
+        // 将数据库存储的持久数据填充至map
+        fillDbDataMap(dbDatas);
 
-        if (dbDatas.length > 0) {
-            // TODO 
-            // 存储， dbDatas map: fileGuid => file
-        } else {
-            // 初始查询， 从跟开始遍历获取，文件则调用接口获取数据，目录则列递归目录
+        // 访问remote，递归获取整个目录树
+        let root = await naotuService.getRootDir();
+        let dirGuid = root.file_guid;
 
-            // 获取根目录
-            let root = await naotuService.getRootDir();
-            let dirGuid = root.file_guid;
+        await resolveDir(dirGuid);
 
-            // 从根目录开始处理
-            resolveDir(dirGuid);
+        storeDirData();
 
-            //TODO 存储http Map， remoteDatas map: fileGuid => file
+        // 查找需要更新的文件，并请求网络获取最新内容执行更新
+        let needUpdateDatas = await storeService.loadNeedUpdateData();
+        for (let f of needUpdateDatas) {
+            console.log(`请求文件: ${f.file_name}`)
+            f.content = await naotuService.open(f.file_guid);
+            await storeService.updateFile(f);
         }
-
     } catch (err) {
         console.error(err);
+    }
+}
+
+/**
+ * 存储目录数据
+ */
+function storeDirData() {
+    // diff
+    let newFileNodes: Array<FileNode> = [];
+    let modFileNodes: Array<FileNode> = [];
+
+    for (let [k, v] of remoteDataMap) {
+        let dbFileNode = dbDataMap.get(k);
+
+        if (!dbFileNode) { // 数据库不存在，需要 INSERT
+            newFileNodes.push(v);
+        } else if (v.last_modified_time != dbFileNode.last_modified_time || v.parent_guid != dbFileNode.parent_guid) { // 值被更新，需要UPDATE
+            modFileNodes.push(v);
+        } else {
+            console.log(`${v.file_name} 没有变更，无需更新。`)
+        }
+    }
+
+    storeService.insertData(newFileNodes);
+    storeService.updateData(modFileNodes);
+}
+
+/**
+ * 填充数据库的数据至map
+ * @param dbDatas 数据库存储的信息
+ */
+function fillDbDataMap(dbDatas: Array<FileNode>) {
+    for (let f of dbDatas) {
+        dbDataMap.set(f.file_guid, f);
     }
 }
 
@@ -49,32 +82,23 @@ async function main() {
  * 遍历处理目录
  * @param dirGuid 目录唯一id
  */
-async function resolveDir(dirGuid:string) {
-    console.log(`处理目录：${dirGuid}`)
-    let fileNodes: Array<FileNode> = await naotuService.ls(dirGuid);
+async function resolveDir(dirGuid: string, dir?: FileNode) {
+    console.log(`加载目录：${dir ? dir.file_name : '根目录'}`);
 
-    // 先把文件、目录的基本数据全部保存至数据库
-    storeService.storeData(fileNodes);
+    let fileNodes: Array<FileNode> = await naotuService.ls(dirGuid);
 
     // 获取文件详情、递归目录
     for (let f of fileNodes) {
-        if (f.file_type == FileType.FILE) {
-            await resolveFile(f.file_guid);
-        } else {
-            await resolveDir(f.file_guid);
-        }
-    }
-}
+        remoteDataMap.set(f.file_guid, f);
 
-/**
- * 处理文件，获取文件内容并保存至数据库
- * @param fileGuid 文件唯一id
- */
-async function resolveFile(fileGuid:string) {
-    console.log(`请求文件: ${fileGuid}`)
-    let kmFile = await naotuService.open(fileGuid);
-    let content = JSON.stringify(kmFile);
-    await storeService.updateContent(fileGuid, content);
+        if (f.file_type == FileType.DIRECTORY) {
+            await resolveDir(f.file_guid, f);
+        }
+        // 加载阶段不处理文件详情
+        // else {
+        //     await resolveFile(f);
+        // }
+    }
 }
 
 function readCookie() {
