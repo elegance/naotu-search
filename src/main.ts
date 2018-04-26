@@ -26,9 +26,9 @@ async function main() {
 
         // 访问remote，递归获取整个目录树
         let root = await naotuService.getRootDir();
-        let dirGuid = root.file_guid;
+        remoteDataMap.set(root.file_guid, root);
 
-        await resolveDir(dirGuid);
+        await resolveDir(root);
 
         storeDirData();
 
@@ -80,19 +80,19 @@ function fillDbDataMap(dbDatas: Array<FileNode>) {
 
 /**
  * 遍历处理目录
- * @param dirGuid 目录唯一id
+ * @param dir 目录唯一id
  */
-async function resolveDir(dirGuid: string, dir?: FileNode) {
-    console.log(`加载目录：${dir ? dir.file_name : '根目录'}`);
+async function resolveDir(dir: FileNode) {
+    console.log(`加载目录：${dir.file_name}`);
 
-    let fileNodes: Array<FileNode> = await naotuService.ls(dirGuid);
+    let fileNodes: Array<FileNode> = await naotuService.ls(dir.file_guid);
 
     // 获取文件详情、递归目录
     for (let f of fileNodes) {
         remoteDataMap.set(f.file_guid, f);
 
         if (f.file_type == FileType.DIRECTORY) {
-            await resolveDir(f.file_guid, f);
+            await resolveDir(f);
         }
         // 加载阶段不处理文件详情
         // else {
